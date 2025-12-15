@@ -5,12 +5,7 @@ import { CVProfile, CVType, JobCriteria } from "../types";
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 export const generateCVs = async (criteria: JobCriteria): Promise<CVProfile[]> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("API Key is missing");
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   // Dynamic instruction based on user preferences
   const sectionInstruction = `
