@@ -4,7 +4,7 @@ import { generateCVs } from './services/geminiService';
 import { generatePDF } from './services/pdfService';
 import { saveCV, getSavedCVs, deleteCV } from './services/storageService';
 import { signInWithGoogle, logoutUser, subscribeToAuthChanges } from './services/authService';
-import { AppView, CVProfile, CVType, JobCriteria, CVTone } from './types';
+import { AppView, CVProfile, CVType, JobCriteria, CVTone, Region, Language } from './types';
 import { User } from 'firebase/auth';
 
 // --- DEMO USER CONSTANT ---
@@ -58,6 +58,9 @@ const Icons = {
   ),
   Demo: () => (
      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12s2.545-5 7-5c4.454 0 7 5 7 5s-2.546 5-7 5c-4.455 0-7-5-7-5z"/><path d="M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/><path d="M21 17v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2"/><path d="M21 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2"/></svg>
+  ),
+  Lock: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
   )
 };
 
@@ -108,6 +111,32 @@ const Footer = () => (
     Trigenys Group © {new Date().getFullYear()} • Powered by Gemini 2.5
   </footer>
 );
+
+// --- CUSTOM ALERT MODAL ---
+const AlertModal = ({ isOpen, onClose, title, message }: { isOpen: boolean; onClose: () => void; title: string; message: string }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-bordeaux-950/90 backdrop-blur-md animate-fade-in-up">
+            <div className="bg-bordeaux-900 border border-gold-500/30 p-8 rounded-2xl max-w-sm w-full shadow-[0_0_50px_-10px_rgba(212,175,55,0.2)] text-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gold-500/5 rounded-full blur-xl -translate-y-1/2 translate-x-1/2"></div>
+                
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gold-500/10 text-gold-400 mb-4 border border-gold-500/20">
+                   <Icons.Lock />
+                </div>
+                
+                <h3 className="font-display text-xl text-gold-400 mb-2">{title}</h3>
+                <p className="font-serif text-gray-300 mb-6 text-sm leading-relaxed whitespace-pre-line">{message}</p>
+                
+                <button 
+                  onClick={onClose}
+                  className="w-full py-3 bg-gradient-to-r from-gold-600 to-gold-400 text-bordeaux-950 font-bold text-xs tracking-[0.2em] rounded-lg hover:brightness-110 transition-all"
+                >
+                    UNDERSTOOD
+                </button>
+            </div>
+        </div>
+    );
+};
 
 const Landing = ({ onEnter }: { onEnter: () => void }) => (
   <div className="min-h-screen flex flex-col justify-center items-center text-center px-4 bg-bordeaux-950 relative overflow-hidden">
@@ -197,6 +226,8 @@ const Dashboard = ({ onSelectCV, user }: { onSelectCV: (cv: CVProfile) => void; 
     context: '', 
     yearsExperience: 2,
     tone: CVTone.PROFESSIONAL,
+    region: Region.EUROPE,
+    language: Language.FRENCH,
     includeHobbies: true,
     includeSummary: true
   });
@@ -264,6 +295,29 @@ const Dashboard = ({ onSelectCV, user }: { onSelectCV: (cv: CVProfile) => void; 
                 className="w-full bg-black/20 border border-white/10 rounded-xl p-4 text-white placeholder-white/20 focus:outline-none focus:border-gold-500/50 focus:bg-black/40 transition-all resize-none font-sans focus:ring-1 focus:ring-gold-500/20"
                 placeholder="Describe the company culture, specific challenges, and hidden requirements..."
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="group">
+                 <label className="block text-[10px] uppercase tracking-widest text-gold-500/80 mb-2 font-bold">Cultural Region</label>
+                 <select 
+                   value={criteria.region}
+                   onChange={(e) => setCriteria({...criteria, region: e.target.value as Region})}
+                   className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold-500/50"
+                 >
+                   {Object.values(Region).map(r => <option key={r} value={r} className="bg-bordeaux-950">{r}</option>)}
+                 </select>
+              </div>
+              <div className="group">
+                 <label className="block text-[10px] uppercase tracking-widest text-gold-500/80 mb-2 font-bold">Language</label>
+                 <select 
+                   value={criteria.language}
+                   onChange={(e) => setCriteria({...criteria, language: e.target.value as Language})}
+                   className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold-500/50"
+                 >
+                   {Object.values(Language).map(l => <option key={l} value={l} className="bg-bordeaux-950">{l}</option>)}
+                 </select>
+              </div>
             </div>
 
             <div>
@@ -506,10 +560,11 @@ const HistoryView = ({ onSelectCV, user }: { onSelectCV: (cv: CVProfile) => void
 
 const Modal = ({ cv, onClose, user }: { cv: CVProfile; onClose: () => void; user: User }) => {
     const [saving, setSaving] = useState(false);
+    const [showRestrictedModal, setShowRestrictedModal] = useState(false);
 
     const handleSave = async () => {
         if (user.uid === 'demo-guest') {
-            alert("🔒 DEMO MODE RESTRICTION\n\nPlease log in with a Google account to save profiles to the Vault.");
+            setShowRestrictedModal(true);
             return;
         }
 
@@ -525,6 +580,12 @@ const Modal = ({ cv, onClose, user }: { cv: CVProfile; onClose: () => void; user
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-bordeaux-950/90 backdrop-blur-lg">
+            <AlertModal 
+              isOpen={showRestrictedModal}
+              onClose={() => setShowRestrictedModal(false)}
+              title="DEMO MODE RESTRICTION"
+              message={`🔒 Please log in with a Google account to save profiles to the Vault.`}
+            />
             <div className="w-full max-w-5xl bg-[#f8f8f8] text-gray-900 rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up border border-white/20">
                 {/* Modal Header */}
                 <div className="p-4 bg-white border-b flex justify-between items-center sticky top-0 z-10 shadow-sm">

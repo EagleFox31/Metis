@@ -18,6 +18,24 @@ export enum CVTone {
   BOLD = 'Bold/Direct',
 }
 
+export enum Region {
+  EUROPE = 'Europe',
+  ASIA = 'Asia',
+  AMERICAS = 'Americas',
+  AFRICA_FR = 'Afrique Francophone',
+  AFRICA_EN = 'Afrique Anglophone',
+  AFRICA_PT_ES = 'Afrique Esp & Portuguaise',
+}
+
+export enum Language {
+  FRENCH = 'Français',
+  ENGLISH = 'English',
+  SPANISH = 'Español',
+  PORTUGUESE = 'Português',
+  GERMAN = 'Deutsch',
+  ITALIAN = 'Italiano'
+}
+
 export interface Experience {
   role: string;
   company: string;
@@ -54,6 +72,8 @@ export interface JobCriteria {
   context: string;
   yearsExperience: number;
   tone: CVTone;
+  region: Region;
+  language: Language;
   includeHobbies: boolean;
   includeSummary: boolean;
 }

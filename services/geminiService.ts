@@ -28,6 +28,10 @@ export const generateCVs = async (criteria: JobCriteria): Promise<CVProfile[]> =
     Context: ${criteria.context}
     Required Experience: ${criteria.yearsExperience} years.
     
+    CRITICAL INSTRUCTIONS FOR IDENTITY VS LANGUAGE:
+    1. Cultural Identity: The profiles must originate from the region: **${criteria.region}**. Use realistic names, university names, and location data that strongly reflect this region.
+    2. Output Language: The CV content (summary, skills, descriptions, role titles) MUST be written in **${criteria.language}**.
+    
     ${toneInstruction}
     ${sectionInstruction}
 
